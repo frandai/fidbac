@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="View #{loggedSession.viewPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>View <strong>#{loggedSession.viewPresentation.title}</strong>:</p>
+            <p:panel header="Legend" toggleable="true" collapsed="true">
+                <p>Feelings:</p>
+                <p:panelGrid columns="#{loggedSession.viewPresentation.presentationHaveFeelingList.size()}" styleClass="ui-responsive">
+                    <c:forEach items="#{loggedSession.viewPresentation.presentationHaveFeelingList}" var="feeling">
+                        <p:commandButton value="#{feeling.feeling.name}" type="button"
+                                         style="border-bottom: thick solid #{feeling.feeling.color};" >
+                            <div class="legendfeeling feeling_#{feeling.feeling.icon}"></div>
+                        </p:commandButton>
+                    </c:forEach>
+                </p:panelGrid>
+                <c:if test="#{not empty loggedSession.viewPresentation.sectionList}"><p>Sections:</p></c:if>
+                <p:panelGrid columns="#{loggedSession.viewPresentation.sectionList.size()}" styleClass="ui-responsive">
+                    <c:forEach items="#{loggedSession.viewPresentation.sectionList}" var="section">
+                        <p:commandButton value="#{section.title}" type="button">
+                        </p:commandButton>
+                    </c:forEach>
+                </p:panelGrid>
+            </p:panel>
+            <br/>
+            <c:if test="#{not empty loggedSession.viewPresentation.questionList}">
+                <p:panel header="Questions" toggleable="true" collapsed="true">
+                    <c:forEach items="#{loggedSession.viewPresentation.questionList}" var="question">
+                        <p:panel toggleable="true" collapsed="true" header="#{question.question}">
+                            <div class="center">
+                                <h:outputText escape="false" value="#{question.answerMessage(loggedSession.logUser)}" />
+                            </div>
+                            <c:forEach items="#{question.anoptionList}" var="option">
+                                <p:commandButton icon="ui-icon-#{option.correct eq 1? 'check' : 'delete'}"
+                                                 type="button" value="#{option.anoption}" 
+                                                 style="#{option.getUserStyle(loggedSession.logUser)}"
+                                                 />
+                            </c:forEach>
+                        </p:panel>
+                        <br/>
+                    </c:forEach>
+                </p:panel>
+                <br/>
+            </c:if>
+            <p:panel header="General" toggleable="true">
+                <div class="loadData_general loadData" style="display: none;">Waiting for users to connect...</div>
+                <p:panelGrid columns="1" styleClass="ui-responsive chartsu">
+                    <span>History of sum of feelings:</span>
+                    <div class="happiness-general-chart"></div>
+                    <span>History of feelings:</span>
+                    <div class="feeling-general-chart"></div>
+                </p:panelGrid>
+                <div class="center">
+                    <c:forEach items="#{loggedSession.viewPresentation.presentationHaveFeelingList}" var="feeling">
+                        <p:commandButton value="#{feeling.feeling.name}" type="button" styleClass="ui-btn-inline ui-mini"
+                                         onclick="hydeShowChart('general', #{feeling.feeling.feelingId});
+                                                 this.innerHTML = (this.innerHTML === '#{feeling.feeling.name}' ?
+                                                         '(#{feeling.feeling.name})' : '#{feeling.feeling.name}');" 
+                                         style="border-bottom: thick solid #{feeling.feeling.color};"
+                                         />
+                    </c:forEach>
+                </div>
+            </p:panel>
+            <br/>
+
+            <!-- DEFINITIONS FOR UI -->
+            <style>
+                .ct-label {
+                    fill: rgba(0,0,0,1) !important;
+                    color: rgba(0,0,0,1) !important;
+                }
+                .ct-series-a .ct-slice-pie {
+                    stroke: green !important;
+                    fill: green !important;
+                }
+
+                .ct-series-b .ct-slice-pie {
+                    stroke: red !important;
+                    fill: red !important;
+                }
+
+                .changeSection .ct-line, .changeSection .ct-point {
+                    stroke: black !important;
+                }
+
+                .hiddenSection .ct-line, .hiddenSection .ct-point, .hiddenSection .ct-area {
+                    stroke: transparent !important;
+                    fill: transparent !important;
+                }
+            </style>
+            <script type="text/javascript">
+                _startTime = #{loggedSession.viewPresentation.startdate.time};
+            </script>
+
+            <c:forEach items="#{loggedSession.viewPresentation.presentationHaveFeelingList}" var="feeling">
+                <style>
+                    .ct-series-#{feeling.orderLetter} .ct-line, .ct-series-#{feeling.orderLetter} .ct-point,
+                    .ct-series-#{feeling.orderLetter} .ct-bar {
+                        stroke: #{feeling.feeling.color} !important;
+                    }
+                </style>
+                <script type="text/javascript">
+                    _feelingsConfiguration[_feelingsConfiguration.length] = {
+                        name: '#{feeling.feeling.name}',
+                        feelingId: #{feeling.feeling.feelingId},
+                        icon: '#{feeling.feeling.icon}'
+                    };
+                </script>
+            </c:forEach>
+            <script type="text/javascript">
+                setTimeout(function () {
+                    refreshAllCharts();
+                }, 300);
+                addChart('general');
+                hydrateChartWithData('general', #{controlPresentation.userData});
+            </script>
+
+            <!-- END DEFINITIONS FOR UI -->
+
+            <c:forEach items="#{loggedSession.viewPresentation.sectionList}" var="section">
+                <c:if test="#{section.endtime ne null}">
+                    <script type="text/javascript">
+                        _sectionsTime[_sectionsTime.length] = getCurrentMinutesForPresentation(#{section.endtime.time});
+                    </script>
+                </c:if>
+            </c:forEach>
+            <c:if test="#{loggedSession.viewPresentation.enddate ne null}">
+                <script type="text/javascript">
+                    var endTime = getCurrentMinutesForPresentation(#{loggedSession.viewPresentation.enddate.time});
+                    _sectionsTime[_sectionsTime.length] = endTime;
+                    _maxTime = endTime;
+                    refreshAllCharts();
+                </script>
+            </c:if>
+            <p class="center">
+                <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="presentationshistory" styleClass="ui-btn-inline" />
+            </p>
+        </ui:define>
+    </ui:composition>
+</html>

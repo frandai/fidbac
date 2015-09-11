@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"  
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="User Data: #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>Mandatory user data for <strong>#{loggedSession.adminPresentation.title}</strong>:</p>
+            <c:if test="#{loggedSession.adminPresentation.isStarted}" >
+                <div class="center">You can't change this data if the presentation is #{loggedSession.adminPresentation.status}.</div>
+            </c:if>
+            <div class="aditionalInformation center">
+                <c:forEach var="property" items="#{adminPresentation.defaultPropertires}" >
+                    <pm:field>
+                        <p:selectBooleanCheckbox
+                            
+                            rendered="#{!loggedSession.adminPresentation.isStarted}"
+                            value="#{property.propertySelected}" itemLabel="#{property.description} (#{property.typeDefinition})">
+                            <p:ajax />
+                        </p:selectBooleanCheckbox>
+                        <h:outputText value="#{property.description} (#{property.typeDefinition})" rendered="#{property.propertySelected and loggedSession.adminPresentation.isStarted}" />
+                        <c:forEach items="#{property.valueList}" var="value">
+                            <h:outputText value=" '#{value.value}';" />
+                        </c:forEach>
+                    </pm:field>
+                </c:forEach>
+                <c:forEach var="property" items="#{loggedSession.adminPresentation.notDefaultPropertyList}" >
+                    <pm:field
+                            id="button_prueba">
+                        <p:selectBooleanCheckbox onchange="if(!confirm('This will remove the property. Do you want to continue?')) { return false; }"
+                            rendered="#{!loggedSession.adminPresentation.isStarted and property ne null}" value="#{property.propertySelected}" itemLabel="#{property.description} (#{property.typeDefinition})" >
+                            <p:ajax listener="#{adminPresentation.changeProperty(property)}" />
+                        </p:selectBooleanCheckbox>
+                        <h:outputText value="#{property.description} (#{property.typeDefinition})" rendered="#{property.propertySelected and loggedSession.adminPresentation.isStarted}" />
+                        <br/><c:forEach items="#{property.valueList}" var="value">
+                            <h:outputText value=" '#{value.value}';" />
+                        </c:forEach>
+                    </pm:field>
+                </c:forEach>
+                <p>
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" value="Add Property" icon="ui-icon-plus" onclick="PF('addProperty').show();" type="button" styleClass="ui-btn-inline" />
+                </p>
+                <hr/>
+                <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="#{adminPresentation.saveUserData}" process=":form_body" />
+            </div>
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Add Property" widgetVar="addProperty" showEffect="pop" id="d_property" >
+                <h:form>
+                    <pm:field>
+                        <h:outputLabel value="Property Name" />
+                        <p:inputText id="property_name" label="Property Name" value="#{adminPresentation.propertyDescription}" 
+                                     required="true" />
+                        <p:watermark for="property_name" value="Name" />
+                    </pm:field>
+                    <pm:field>
+                        <p:selectOneMenu value="#{adminPresentation.propertyType}">
+                            <p:ajax event="change" update="presentation_description" partialSubmit="true" />
+                            <f:selectItem itemLabel="Text" itemValue="1" />
+                            <f:selectItem itemLabel="List" itemValue="2" />
+                            <f:selectItem itemLabel="Date" itemValue="3" />
+                            <f:selectItem itemLabel="Number" itemValue="4" />
+                        </p:selectOneMenu>
+                    </pm:field>
+                    <pm:field>
+                        <h:outputLabel value="Values (semicolon separated)" />
+                        <p:inputTextarea id="presentation_description" label="Presentation Description" value="#{adminPresentation.propertyValues}" tabindex="3"
+                                         disabled="#{adminPresentation.propertyType ne 2}"
+                                         />
+                        <p:watermark for="presentation_description" value="Only avaiable with type 'List'" />
+                    </pm:field>
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" value="Add Property" icon="ui-icon-check" ajax="false" action="#{adminPresentation.saveProperty}" />        
+                </h:form>
+            </p:dialog>      
+        </ui:define>
+    </ui:composition>
+</html>

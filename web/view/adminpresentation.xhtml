@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+      >
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Admin #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <div class="aditionalInformation">
+                <p class="center"><strong>#{loggedSession.adminPresentation.title}</strong> (#{loggedSession.adminPresentation.status})</p>
+                <p:commandButton id="feelings" value="Feelings (#{loggedSession.adminPresentation.presentationHaveFeelingList.size()})" icon="ui-icon-star" action="adminpresentationfeelings" />
+                <p:commandButton id="sections" value="Sections (#{loggedSession.adminPresentation.sectionList.size()})" icon="ui-icon-bullets" action="adminpresentationsections" />
+                <p:commandButton id="questions" value="Questions (#{loggedSession.adminPresentation.questionList.size()})" icon="ui-icon-comment" action="adminpresentationquestions" />
+                <p:commandButton id="data" value="User Data (#{loggedSession.adminPresentation.propertyList.size()})" icon="ui-icon-user"
+                                 action="adminpresentationuserdata"
+                                 />
+                <p:commandButton id="filters" value="Filters (#{loggedSession.adminPresentation.filterList.size()})" icon="ui-icon-gear"  action="adminpresentationfilters" />
+                <p:commandButton id="edit" value="Presentation Data" icon="ui-icon-edit" onclick="PF('data').show();" type="button" />
+                <!-- not yet implemented... -->
+                <!-- p:commandButton id="copy" value="Copy Presentation" icon="ui-icon-edit" onclick="PF('copy').show();" type="button" /-->
+                <hr/>
+                <p:commandButton id="start" value="#{loggedSession.adminPresentation.isStarted ? 
+                                                     (loggedSession.adminPresentation.isFinished ?'Show data' : 'Continue')
+                                                      : 'Start'}"
+                                 onclick="#{loggedSession.adminPresentation.isStarted ? '' : 'return confirmStartPresentation()'}"
+                                 icon="ui-icon-carat-r" disabled="#{loggedSession.adminPresentation.status eq 'Configuring'}" 
+                                 action="#{adminPresentation.startPresentation}"
+                                 />
+                <p class="center">
+                    <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="mypresentations" styleClass="ui-btn-inline" />
+                </p>
+            </div>
+
+            <p:dialog header="Presentation" widgetVar="data" showEffect="pop" >
+                <pm:field>
+                    <h:outputLabel value="Presentation Title" />
+                    <p:inputText id="presentation_title" label="Presentation Title" value="#{loggedSession.adminPresentation.title}" tabindex="1" required="true"/>
+                    <p:watermark for="presentation_title" value="Title" />
+                </pm:field>
+                <pm:field>
+                    <h:outputLabel value="Presentation Code: #{loggedSession.adminPresentation.code}" />
+                </pm:field>
+                <pm:field>
+                    <h:outputLabel value="Presentation Description" />
+                    <p:inputTextarea id="presentation_description" label="Presentation Description" value="#{loggedSession.adminPresentation.description}" tabindex="3"/>
+                    <p:watermark for="presentation_description" value="Description" />
+                </pm:field>
+                <p:commandButton value="Save Presentation" icon="ui-icon-check" ajax="false" action="#{presentations.savePresentation}" />
+                <p:commandButton value="Remove Presentation" onclick="if (!confirm('Are you sure? you will lost all the presentation\'s data!')) {
+                            return false;
+                        }"
+                                 icon="ui-icon-delete" ajax="false" action="#{adminPresentation.deletePresentation}"
+                                 style="background-color: darksalmon;"
+                                 />
+            </p:dialog>
+        </ui:define>
+    </ui:composition>
+</html>

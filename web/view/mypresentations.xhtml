@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+      >
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="My Presentations"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <div class="center">
+                <p:commandButton id="new" value="New Presentation" icon="ui-icon-plus" styleClass="ui-btn-inline" onclick="PF('new').show();" type="button" />
+                <br/><br/>
+            </div>
+            <p:dataList 
+                pt:data-filter="true" pt:data-filter-placeholder="Search..." pt:data-inset="true"
+                lazy="true"  value="#{presentations.userProfile.presentationListAdmin}" var="presentation" >
+                <h:commandLink action="#{presentations.goToPresentation(presentation)}" immediate="true">
+                    <h2>#{presentation.title}</h2>
+                    <p>#{presentation.code}</p>
+                    <p class="ui-li-aside"><strong>#{presentation.status}</strong></p>
+                </h:commandLink>
+            </p:dataList>
+            
+            <p:dialog header="Presentation" widgetVar="new" showEffect="pop" >
+                    <p:inputText id="presentation_title" label="Presentation Title" value="#{presentations.newPresentationTitle}" tabindex="1" required="true"/>
+                    <p:watermark for="presentation_title" value="Title" />
+                    <p:inputText id="presentation_code" label="Presentation Code" value="#{presentations.newPresentationCode}" tabindex="2" />
+                    <p:watermark for="presentation_code" value="Code (optional)" />
+                    <p:inputTextarea id="presentation_description" label="Presentation Description" value="#{presentations.newPresentationDescription}" tabindex="3"/>
+                    <p:watermark for="presentation_description" value="Description" />
+
+                    <p:commandButton value="Create Presentation" icon="ui-icon-plus" ajax="false" action="#{presentations.newPresentation}" />
+            </p:dialog>
+        </ui:define>
+    </ui:composition>
+</html>

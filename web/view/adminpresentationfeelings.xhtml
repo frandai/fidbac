@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"  
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Feelings: #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>Feelings for <strong>#{loggedSession.adminPresentation.title}</strong>:</p>
+            <c:if test="#{loggedSession.adminPresentation.isStarted}" >
+                <div class="center">You can't change this data if the presentation is #{loggedSession.adminPresentation.status}.</div>
+            </c:if>
+            <div class="aditionalInformation center">
+                <p:dataList 
+                    pt:data-inset="true" styleClass="feeling"
+                    lazy="false"  value="#{loggedSession.adminPresentation.presentationHaveFeelingList}" var="feeling"
+                    >
+                    <h:outputLabel style="
+                                   border-bottom: thick solid #{feeling.feeling.color};
+                                   background-color: #F3F3F3;
+                                   border-top: thick solid #FFFFFF;
+                                   " >
+                        <span style="#{feeling.isdefault eq 1 ? 'font-weight: bolder;' : ''}">#{feeling.feeling.name}</span>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" styleClass="ui-btn-inline" style="display: none;" oncomplete="PF('editFeeling').show();" ajax="true" update=":form_feeling">
+                            <f:setPropertyActionListener target="#{adminPresentation.selectedFeeling}" value="#{feeling}" />
+                        </p:commandButton>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" icon="ui-icon-delete" styleClass="ui-btn-inline" ajax="false" action="#{adminPresentation.deleteFeeling(feeling)}"
+                                         onclick="if (!confirm('Do you want to remove the feeling?')) {
+                                                     return false;
+                                                 }"
+                                         />
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted and feeling.order ne 1}" icon="ui-icon-arrow-u" styleClass="ui-btn-inline"
+                                         action="#{adminPresentation.upFeeling(feeling)}" ajax="false"/>
+                        <div class="feeling_icon feeling_#{feeling.feeling.icon}">&nbsp;</div>
+                    </h:outputLabel>
+                </p:dataList>
+                <p>
+                    <p:commandButton value="Add Feeling" rendered="#{!loggedSession.adminPresentation.isStarted}" icon="ui-icon-plus" ajax="false" action="#{adminPresentation.addFeeling}" styleClass="ui-btn-inline" />
+                </p>
+                <hr/>
+                <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="adminpresentation" />
+            </div>
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Edit Feeling" widgetVar="editFeeling" showEffect="pop" id="d_feeling" >
+                <h:form id="form_feeling">
+                    <p:inputText value="#{adminPresentation.selectedFeeling.feeling.name}" />
+                    <p:selectOneMenu var="icon" value="#{adminPresentation.selectedFeeling.feeling.icon}">
+                        <f:selectItem itemLabel="Smiley 1" itemValue="1" />
+                        <f:selectItem itemLabel="Smiley 2" itemValue="2" />
+                        <f:selectItem itemLabel="Smiley 3" itemValue="3" />
+                        <f:selectItem itemLabel="Smiley 4" itemValue="4" />
+                        <f:selectItem itemLabel="Smiley 5" itemValue="5" />
+                        <f:selectItem itemLabel="Smiley 6" itemValue="6" />
+                        <f:selectItem itemLabel="Smiley 7" itemValue="7" />
+                        <f:selectItem itemLabel="Smiley 8" itemValue="8" />
+                        <f:selectItem itemLabel="Smiley 9" itemValue="9" />
+                        <f:selectItem itemLabel="Smiley 10" itemValue="10" />
+                        <f:selectItem itemLabel="Smiley 11" itemValue="11" />
+                        <f:selectItem itemLabel="Smiley 12" itemValue="12" />
+                        <f:selectItem itemLabel="Smiley 13" itemValue="13" />
+                        <f:selectItem itemLabel="Smiley 14" itemValue="14" />
+                        <f:selectItem itemLabel="Smiley 15" itemValue="15" />
+                    </p:selectOneMenu>
+                    <p:panel header="Icons" toggleable="true" collapsed="true" styleClass="center">
+                            <p:graphicImage value="#{resource['images/icons_n.png']}" />
+                    </p:panel>
+                    <p:colorPicker value="#{adminPresentation.selectedFeeling.feeling.color}" mode="inline" />
+                    <p:commandButton value="Save Feeling" icon="ui-icon-check" ajax="false" action="#{adminPresentation.saveFeeling}" />        
+                </h:form>
+            </p:dialog>      
+        </ui:define>
+    </ui:composition>
+</html>

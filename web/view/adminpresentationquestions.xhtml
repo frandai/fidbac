@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"  
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Questions: #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>Questions for <strong>#{loggedSession.adminPresentation.title}</strong>:</p>
+            <c:if test="#{loggedSession.adminPresentation.isStarted}" >
+                <div class="center">You can't change this data if the presentation is #{loggedSession.adminPresentation.status}.</div>
+            </c:if>
+            <div class="aditionalInformation center">
+                <p:dataList 
+                        pt:data-inset="true" styleClass="question"
+                        lazy="false"  value="#{loggedSession.adminPresentation.questionList}" var="question"
+                        id="questions_data"
+                    >
+                    <h:outputLabel>
+                            <p><strong>#{question.question}</strong><br/>
+                                <h:outputText escape="false" value="#{question.optionsHTML}"/>
+                            </p>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" style="float: left;" icon="ui-icon-edit" styleClass="ui-btn-inline" oncomplete="PF('editQuestion').show();" ajax="true" update=":form_section">
+                            <f:setPropertyActionListener target="#{adminPresentation.selectedQuestion}" value="#{question}" />
+                        </p:commandButton>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" style="float: right;" icon="ui-icon-delete" styleClass="ui-btn-inline" ajax="false" action="#{adminPresentation.deleteQuestion(question)}"
+                                         onclick="if (!confirm('Do you want to remove the question?')) {
+                                                     return false;
+                                                 }"
+                                         />
+                    </h:outputLabel>
+                </p:dataList>
+                <p>
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" value="Add Question" update="questions_data :form_section" icon="ui-icon-plus" ajax="true" actionListener="#{adminPresentation.addQuestion}" styleClass="ui-btn-inline" oncomplete="PF('editQuestion').show();" />
+                </p>
+                <hr/>
+                <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="adminpresentation" />
+            </div>
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Edit Question" widgetVar="editQuestion" showEffect="pop" id="d_question" >
+                <h:form id="form_section">
+                    <p:inputTextarea value="#{adminPresentation.selectedQuestion.question}" required="true" label="Question" />
+                    <pm:field>
+                        <h:outputLabel value="Answers (semicolon separated, '*' for correct answer)" />
+                        <p:inputTextarea label="Answers" id="selected_section_description" value="#{adminPresentation.selectedQuestion.optionsSemicolon}" required="true" />
+                    </pm:field>
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted}" value="Save Question" icon="ui-icon-check" ajax="false" action="#{adminPresentation.saveQuestion}" />        
+                </h:form>
+            </p:dialog>      
+        </ui:define>
+    </ui:composition>
+</html>

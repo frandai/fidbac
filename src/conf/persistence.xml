@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+  <persistence-unit name="fidbacPU" transaction-type="JTA">
+    <jta-data-source>fidbac</jta-data-source>
+    <class>db.Anoption</class>
+    <class>db.PresentationHaveFeeling</class>
+    <class>db.Section</class>
+    <class>db.UserHaveProperty</class>
+    <class>db.Property</class>
+    <class>db.User</class>
+    <class>db.Filter</class>
+    <class>db.Question</class>
+    <class>db.Presentation</class>
+    <class>db.Value</class>
+    <class>db.Feeling</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+      <property name="eclipselink.cache.shared.default" value="false"/>
+    </properties>
+  </persistence-unit>
+</persistence>

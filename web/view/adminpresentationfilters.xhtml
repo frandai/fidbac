@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"  
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Filters: #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>Filters for <strong>#{loggedSession.adminPresentation.title}</strong>:</p>
+            <c:if test="#{loggedSession.adminPresentation.isStarted and !loggedSession.adminPresentation.isFinished}" >
+                 <div class="center">You can't change this data if the presentation is #{loggedSession.adminPresentation.status}.</div>
+            </c:if>
+            <div class="aditionalInformation center">
+                <p:dataList 
+                        pt:data-inset="true" styleClass="question"
+                        lazy="false"  value="#{loggedSession.adminPresentation.filterList}" var="filter"
+                        id="filter_list"
+                    >
+                    <h:outputLabel>
+                        <p><strong>#{filter.description}</strong>
+                            </p>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted or loggedSession.adminPresentation.isFinished}" style="float: left;" icon="ui-icon-edit" styleClass="ui-btn-inline" oncomplete="PF('editFilter').show();" ajax="true" update=":form_section">
+                            <f:setPropertyActionListener target="#{adminPresentation.selectedFilter}" value="#{filter}" />
+                        </p:commandButton>
+                        <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted or loggedSession.adminPresentation.isFinished}" style="float: right;" icon="ui-icon-delete" styleClass="ui-btn-inline" ajax="false" action="#{adminPresentation.deleteFilter(filter)}"
+                                         onclick="if (!confirm('Do you want to remove the filter?')) {
+                                                     return false;
+                                                 }"
+                                         />
+                    </h:outputLabel>
+                </p:dataList>
+                <p>
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted or loggedSession.adminPresentation.isFinished}" value="Add Filter" icon="ui-icon-plus" ajax="true" actionListener="#{adminPresentation.addFilter}" styleClass="ui-btn-inline"
+                                     disabled="#{empty loggedSession.adminPresentation.propertyList}"
+                                     update="filter_list :form_section" oncomplete="PF('editFilter').show();"
+                                     />
+                </p>
+                <hr/>
+                <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="adminpresentation" />
+            </div>
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Edit Filter" widgetVar="editFilter" showEffect="pop" id="d_question" >
+                <h:form id="form_section">
+                    <p:selectOneMenu value="#{adminPresentation.selectedFilter.propertyId}">
+                        <p:ajax event="change" update="form_section" partialSubmit="true" />
+                        <f:selectItems value="#{loggedSession.adminPresentation.propertyList}" var="property"
+                                       itemLabel="#{property.description}" itemValue="#{property}" />
+                    </p:selectOneMenu>
+                    <p:selectOneMenu value="#{adminPresentation.selectedFilter.operation}">
+                            <f:selectItem itemLabel="Equals" itemValue="eq" />
+                            <f:selectItem itemLabel="Not equals" itemValue="ne" />
+                            <f:selectItem itemLabel="Greater than" itemValue="gt" />
+                            <f:selectItem itemLabel="Less than" itemValue="lt" />
+                    </p:selectOneMenu>
+                    
+                    <p:inputTextarea value="#{adminPresentation.selectedFilter.value}" required="true" label="Value" id="filter_value" 
+                                     rendered="#{empty adminPresentation.selectedFilter.propertyId.valueList}" />
+                    <p:watermark for="filter_value" value="Filter's value" />
+                    <p:selectOneMenu value="#{adminPresentation.selectedFilter.value}" 
+                                     rendered="#{not empty adminPresentation.selectedFilter.propertyId.valueList}">
+                        <f:selectItems value="#{adminPresentation.selectedFilter.propertyId.valueList}" var="value"
+                                       itemLabel="#{value.value}" itemValue="#{value.valuePK.valueId}" />
+                    </p:selectOneMenu>
+                    
+                    <p:commandButton rendered="#{!loggedSession.adminPresentation.isStarted or loggedSession.adminPresentation.isFinished}" value="Save Filter" icon="ui-icon-check" ajax="false" action="#{adminPresentation.saveFilter}" />        
+                </h:form>
+            </p:dialog>      
+        </ui:define>
+    </ui:composition>
+</html>

@@ -1,0 +1,77 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:pm="http://primefaces.org/mobile">
+<f:view renderKitId="PRIMEFACES_MOBILE" />
+<f:view locale="en" />
+<h:head>
+    <title>Fidbac - <ui:insert name="title"></ui:insert></title>
+    <h:outputStylesheet library="css" name="styles.css"/>
+    <h:outputScript library="js" name="functions.js"/>
+</h:head>
+<h:body>
+    <h:form id="form_body">
+        <pm:page>
+            <pm:header>
+                <p:toolbar>
+                    <f:facet name="left">
+                        <p class="first">FIDBAC - <ui:insert name="title"></ui:insert></p>
+                    </f:facet>
+
+                    <f:facet name="right">
+                        <p:commandButton value="Sign up" icon="ui-icon-carat-u" onclick="PF('signup').show();" type="button" 
+                                         rendered="#{!loggedSession.logged}" />
+                        <p:commandButton value="Login" icon="ui-icon-carat-r" onclick="PF('login').show();" type="button" 
+                                         rendered="#{!loggedSession.logged}" />
+                        <p:commandButton value="#{loggedSession.logUser.username}" icon="ui-icon-bars" onclick="PF('userActions').show();" type="button" 
+                                         rendered="#{loggedSession.logged}" />
+                    </f:facet>
+                </p:toolbar>
+            </pm:header>
+            <pm:content>
+                <ui:insert name="body"/>
+            </pm:content>
+        </pm:page>
+    </h:form>
+    <p:dialog header="Login" widgetVar="login" showEffect="pop">
+        <h:form>
+            <p:inputText id="username" required="true" label="Username" value="#{loggedSession.loginUser}" tabindex="1"/>
+            <p:watermark for="username" value="Username" />
+            <div class="ui-input-text ui-body-inherit ui-corner-all ui-shadow-inset ui-input-has-clear">
+                <h:inputSecret id="password" required="true" label="Password" value="#{loggedSession.loginPassword}" tabindex="2"/>
+            </div>
+            <p:watermark for="password" value="Password" />
+            <p:commandButton value="Login" icon="ui-icon-carat-r" ajax="false" actionListener="#{loggedSession.login}"/>
+        </h:form>
+    </p:dialog>
+    <p:dialog header="Actions" widgetVar="userActions" showEffect="pop">
+        <h:form>
+            <p:commandButton value="Enter Code" icon="ui-icon-edit" ajax="false" action="index" />
+            <p:commandButton value="My Presentations" icon="ui-icon-heart" ajax="false" action="mypresentations" />
+            <p:commandButton value="Presentations History" icon="ui-icon-eye" ajax="false" action="presentationshistory" />
+            <p:commandButton value="My Profile" icon="ui-icon-user" ajax="false" action="profile" />
+            <p:commandButton value="Logout" icon="ui-icon-delete" ajax="false" action="#{loggedSession.logout}"
+                             onclick="if(!confirm('Are you sure?')){return false;}"
+                             />
+        </h:form>
+    </p:dialog>
+    <p:dialog header="Sign up" widgetVar="signup" showEffect="pop" >
+        <h:form>
+            <p:inputText id="signup_username" required="true" label="Username" value="#{loggedSession.signupUser}" tabindex="1"/>
+            <p:watermark for="signup_username" value="Username" />
+            <div class="ui-input-text ui-body-inherit ui-corner-all ui-shadow-inset ui-input-has-clear">
+                <h:inputSecret id="signup_password" required="true" label="Password" value="#{loggedSession.signupPassword}" tabindex="2"/>
+            </div>
+            <p:watermark for="signup_password" value="Password" />
+            <div class="ui-input-text ui-body-inherit ui-corner-all ui-shadow-inset ui-input-has-clear">
+                <h:inputSecret id="signup_repeat_password" required="true" label="Repeat Password" value="#{loggedSession.signupPassword2}" tabindex="3"/>
+            </div>
+            <p:watermark for="signup_repeat_password" value="Repeat Password" />
+            <p:commandButton value="Sign up" icon="ui-icon-carat-r" ajax="false" actionListener="#{loggedSession.signup}" />
+        </h:form>
+    </p:dialog>
+    <ui:insert name="dialogs"/>
+</h:body>
+</html>

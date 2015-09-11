@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"   
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Presentation #{client.selectedPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <div class="aditionalInformation">
+                <p:panel header="#{client.selectedPresentation.openSection.title}" 
+                         toggleable="true"
+                         collapsed="true"
+                         id="section_header"
+                         widgetVar="sectionDef"
+                         rendered="#{client.selectedPresentation.openSection ne null}"
+                         >
+                    <h:outputText value="#{client.selectedPresentation.openSection.description}" id="section_description" />
+                </p:panel> 
+                <h:outputText value="#{client.answerMessage}" id="answer_message" styleClass="answer" escape="false" />
+                <div class="touchfeelings">
+                    <c:forEach items="#{client.selectedPresentation.presentationHaveFeelingList}" var="feeling">
+                        <p:commandButton value="#{feeling.feeling.name}"
+                                         style="border-bottom: thick solid #{feeling.feeling.color};
+                                         #{client.getFeelingCSS(feeling.feeling.feelingId)}
+                                         "
+                                         styleClass="fbt"
+                                         update="@(.fbt)"
+                                         ajax="true"
+                                         >
+                            <f:setPropertyActionListener target="#{client.selectedFeelingId}" value="#{feeling.feeling.feelingId}" />
+                            <div class="touchfeeling feeling_#{feeling.feeling.icon}"></div>
+                        </p:commandButton>
+                    </c:forEach>
+                </div>
+                <hr/>
+                <p class="center">
+                    <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="#{client.exit}" styleClass="ui-btn-inline"
+                                     onclick="if (!confirm('Are you sure?')) {
+                                                 return false;
+                                             }"
+                                     />
+                    <p:commandButton icon="ui-icon-comment" styleClass="ui-btn-inline"
+                                     onclick="PF('ask').show();"
+                                     />
+                </p>
+            </div>
+
+            <p:socket onMessage="handleSection" channel="/section/#{client.selectedPresentation.presentationId}" autoConnect="true" widgetVar='sectionSubscriber' />
+            <p:socket onMessage="handleQuestion" channel="/question/#{client.selectedPresentation.presentationId}" autoConnect="true" widgetVar='questionSubscriber' />
+
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Section Changed" widgetVar="newSection" showEffect="pop" id="new_section" style="min-width: 330px" >
+                <h:form id="form_section">
+                    <h:outputText escape="false" id="new_section_description" />
+                    <p:commandButton value="Ok" onclick="PF('newSection').hide()" type="button" />
+                </h:form>
+            </p:dialog>   
+            <c:forEach items="#{client.selectedPresentation.questionList}" var="question" >
+                <p:dialog header="Question" widgetVar="question#{question.questionPK.questionId}" showEffect="pop" id="question#{question.questionPK.questionId}" style="min-width: 330px"
+                          closable="false"
+                          >
+                    <h:form id="form_question_#{question.questionPK.questionId}">
+                        <h:outputText value="#{question.question}" />
+                        <c:forEach items="#{question.anoptionList}" var="option" >
+                            <pm:field>
+                                <p:selectBooleanCheckbox value="#{option.selected}" itemLabel="#{option.anoption}" />
+                            </pm:field>
+                        </c:forEach>
+                        <p:commandButton value="Reply" onclick="PF('question#{question.questionPK.questionId}').hide()" 
+                                         ajax="true" update=":form_body:body_page:answer_message, :form_question_#{question.questionPK.questionId}"
+                                         actionListener="#{client.processQuestion(question)}"
+                                         />
+                    </h:form>
+                </p:dialog>
+            </c:forEach>
+            <p:dialog header="Ask" widgetVar="ask" showEffect="pop">
+                <h:form id="form_ask">
+                    <pm:field>
+                        <p:inputText required="true" value="#{client.askMessage}" />
+                    </pm:field>
+                    <p:commandButton value="Ask" onclick="PF('ask').hide()" 
+                                     ajax="true" update=":form_ask :form_body:body_page:growl"
+                                         actionListener="#{client.sendAsk}"
+                                         />
+                </h:form>
+            </p:dialog>
+        </ui:define>
+    </ui:composition>
+</html>

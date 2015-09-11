@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"   
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Presentation #{client.selectedPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <div class="aditionalInformation">
+                <p:panel header="#{client.selectedPresentation.title}" 
+                         toggleable="#{not empty client.selectedPresentation.description}"
+                         collapsed="#{empty client.selectedPresentation.description}"
+                         >
+                    <h:outputText value="#{client.selectedPresentation.description}" />
+                </p:panel> 
+                <br/>
+                <c:if test="#{not loggedSession.logged or not empty client.unknownPropertyList}">
+                    <p:panel header="Before start, we need some information..." >
+                        <c:forEach var="property" items="#{client.unknownPropertyList}" >
+                            <pm:field>
+                                <h:outputLabel value="#{property.property.description}:" />
+                                <p:inputText id="property_#{property.property.propertyId}_text" label="#{property.property.description}" value="#{property.value}" 
+                                             rendered="#{property.property.type eq 1}" />
+                                <p:inputText id="property_#{property.property.propertyId}_number" label="#{property.property.description}" value="#{property.value}" type="number"
+                                             rendered="#{property.property.type eq 4}" />
+                                <p:calendar navigator="true" value="#{property.valueAsDate}" rendered="#{property.property.type eq 3}" pattern="dd/MM/yyyy"/>
+                                <p:selectOneMenu rendered="#{property.property.type eq 2}"
+                                                 value="#{property.value}">
+                                    <f:selectItem itemLabel="" itemValue="" />
+                                    <f:selectItems value="#{property.property.valueList}" var="propertyValue"
+                                                   itemLabel="#{propertyValue.value}" itemValue="#{propertyValue.valuePK.valueId}" />
+                                </p:selectOneMenu>
+                                <p:watermark for="property_#{property.property.propertyId}_text" value="#{property.property.description}" />
+                                <p:watermark for="property_#{property.property.propertyId}_number" value="#{property.property.description}" />
+                            </pm:field>
+                        </c:forEach>
+                    </p:panel>
+                    <br/>
+                </c:if>
+                <p:commandButton value="Start" icon="ui-icon-carat-r" ajax="false" action="#{client.propertyOk}" />
+                <hr/>
+                <p class="center">
+                    <p:commandButton value="Back" icon="ui-icon-carat-l" ajax="false" action="index" styleClass="ui-btn-inline" />
+                </p>
+            </div>
+        </ui:define>
+    </ui:composition>
+</html>

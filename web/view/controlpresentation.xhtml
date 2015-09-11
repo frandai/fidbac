@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:pm="http://primefaces.org/mobile"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:composition template="/template.xhtml">
+        <ui:define name="title">
+            <h:outputText value="Control #{loggedSession.adminPresentation.code}"></h:outputText>
+        </ui:define>
+        <ui:define name="body">
+            <p:growl id="growl"/>
+            <p>Control for <strong>#{loggedSession.adminPresentation.title}</strong>:
+                <strong><h:outputText value="#{loggedSession.adminPresentation.openSection eq null ? '' : 'Current Section:'} #{loggedSession.adminPresentation.status eq 'Finished' ? 'Presentation Finished' : loggedSession.adminPresentation.openSection.title}"
+                                      id="panel_section"/></strong>
+            </p>
+            <p:panelGrid columns="#{loggedSession.adminPresentation.status eq 'Finished' ? 2 : 3}" styleClass="ui-responsive" id="control_grid">
+                <p:commandButton value="QR Code" icon="ui-icon-action" type="button" onclick="generateQR('#{loggedSession.adminPresentation.code}');"/>
+                <p:commandButton value="Admin. Presentation" icon="ui-icon-gear" action="adminpresentation" ajax="false"/>
+                <p:commandButton value="#{loggedSession.adminPresentation.finalSection? 'End Presentation' : 'Next Section'}"
+                                 icon="ui-icon-#{loggedSession.adminPresentation.finalSection? 'power' : 'carat-r'}"
+                                 ajax="true" update="panel_section control_grid panel_questions"
+                                 actionListener="#{controlPresentation.nextSection}"
+                                 rendered="#{loggedSession.adminPresentation.status ne 'Finished'}"
+                                 oncomplete="handleNewSection(#{loggedSession.adminPresentation.finalSection})"
+                                 id="button_next"
+                                 />
+            </p:panelGrid>
+            <p:panel header="Legend" toggleable="true" collapsed="true">
+                <p>Feelings:</p>
+                <p:panelGrid columns="#{loggedSession.adminPresentation.presentationHaveFeelingList.size()}" styleClass="ui-responsive">
+                    <c:forEach items="#{loggedSession.adminPresentation.presentationHaveFeelingList}" var="feeling">
+                        <p:commandButton value="#{feeling.feeling.name}" type="button"
+                                         style="border-bottom: thick solid #{feeling.feeling.color};" >
+                            <div class="legendfeeling feeling_#{feeling.feeling.icon}"></div>
+                        </p:commandButton>
+                    </c:forEach>
+                </p:panelGrid>
+                <c:if test="#{not empty loggedSession.adminPresentation.sectionList}"><p>Sections:</p></c:if>
+                <p:panelGrid columns="#{loggedSession.adminPresentation.sectionList.size()}" styleClass="ui-responsive">
+                    <c:forEach items="#{loggedSession.adminPresentation.sectionList}" var="section">
+                        <p:commandButton value="#{section.title}" type="button">
+                        </p:commandButton>
+                    </c:forEach>
+                </p:panelGrid>
+            </p:panel>
+            <br/>
+            <p:panel header="Questions" toggleable="true" collapsed="true" id="panel_questions"
+                     rendered="#{not empty loggedSession.adminPresentation.questionList}"
+                     style="margin-bottom: 20px;"
+                     >
+                <p class="center">
+                    <p:commandButton value="Send a Question" icon="ui-icon-comment" onclick="PF('questions').show()" 
+                                     rendered="#{loggedSession.adminPresentation.status ne 'Finished'}"
+                                     />
+                    <c:if test="#{loggedSession.adminPresentation.status eq 'Finished'}">
+                        <c:forEach items="#{loggedSession.adminPresentation.questionList}" var="question">
+                            <p:panel toggleable="true" collapsed="true" header="#{question.question}">
+                                <c:forEach items="#{question.anoptionList}" var="option">
+                                    <p:commandButton icon="ui-icon-#{option.correct eq 1? 'check' : 'delete'}"
+                                                     type="button" value="#{option.anoption} (#{option.userList.size()})" 
+                                                     />
+                                </c:forEach>
+                            </p:panel>
+                            <br/>
+                        </c:forEach>
+                    </c:if>
+                </p>
+            </p:panel>
+            <c:if test="#{not empty loggedSession.adminPresentation.filterList}">
+                <p:panel header="Feelings per filter" toggleable="true" collapsed="true">
+                    <p:panelGrid columns="#{loggedSession.adminPresentation.filterList.size()+1}" styleClass="ui-responsive">
+                        <div class="center">
+                            <div class="general_icon_feeling big_icon_feeling"></div>
+                            <p><strong>General</strong></p>
+                        </div>
+                        <c:forEach items="#{loggedSession.adminPresentation.filterList}" var="filter">
+                            <div class="center">
+                                <div class="filter#{filter.filterPK.filterId}_icon_feeling big_icon_feeling"></div>
+                                <p><strong>#{filter.description}</strong></p>
+                            </div>
+                        </c:forEach>
+                    </p:panelGrid>
+                </p:panel>
+                <br/>
+            </c:if>
+            <p:panel header="General" toggleable="true">
+                <div class="loadData_general loadData">Waiting for users to connect...</div>
+                <p:panelGrid columns="2" styleClass="ui-responsive charts">
+                    <span>History of sum of all users' feelings:</span>
+                    <div class="happiness-general-chart"></div>
+                    <span>History of all users' feelings:</span>
+                    <div class="feeling-general-chart"></div>
+                    <p:panelGrid columns="1" styleClass="ui-responsive">
+                        <span>Feelings:</span>
+                        <div class="feeling-bar-general-chart"></div>
+                        <span>Most used feeling:</span>
+                        <div class="general_icon_feeling big_icon_feeling"></div>
+                        <p class="center general_users_connected"></p>
+                        <p:commandButton value="Current (Show Average)" type="button" styleClass="ui-btn-inline general_switch_button"
+                                         onclick="switchAverageData('general');
+                                         this.innerHTML = (this.innerHTML === 'Current (Show Average)' ?
+                                                         'Average (Show Current)' : 'Current (Show Average)');"
+                                         style="width: 95%;margin-left: 5%;"
+                                         />
+                    </p:panelGrid>
+                </p:panelGrid>
+                <div class="center">
+                    <c:forEach items="#{loggedSession.adminPresentation.presentationHaveFeelingList}" var="feeling">
+                        <p:commandButton value="#{feeling.feeling.name}" type="button" styleClass="ui-btn-inline ui-mini"
+                                         onclick="hydeShowChart('general', #{feeling.feeling.feelingId});
+                                                 this.innerHTML = (this.innerHTML === '#{feeling.feeling.name}' ?
+                                                         '(#{feeling.feeling.name})' : '#{feeling.feeling.name}');" 
+                                         style="border-bottom: thick solid #{feeling.feeling.color};"
+                                         />
+                    </c:forEach>
+                </div>
+            </p:panel>
+            <br/>
+
+            <!-- DEFINITIONS FOR UI -->
+            <style>
+                .ct-label {
+                    fill: rgba(0,0,0,1) !important;
+                    color: rgba(0,0,0,1) !important;
+                }
+                .ct-series-a .ct-slice-pie {
+                    stroke: green !important;
+                    fill: green !important;
+                }
+
+                .ct-series-b .ct-slice-pie {
+                    stroke: red !important;
+                    fill: red !important;
+                }
+
+                .changeSection .ct-line, .changeSection .ct-point {
+                    stroke: black !important;
+                }
+
+                .hiddenSection .ct-line, .hiddenSection .ct-point, .hiddenSection .ct-area {
+                    stroke: transparent !important;
+                    fill: transparent !important;
+                }
+            </style>
+            <script type="text/javascript">
+                _startTime = (#{loggedSession.adminPresentation.startdate.time}+((new Date())-(#{controlPresentation.currentDate})));
+            </script>
+
+            <c:forEach items="#{loggedSession.adminPresentation.presentationHaveFeelingList}" var="feeling">
+                <style>
+                    .ct-series-#{feeling.orderLetter} .ct-line, .ct-series-#{feeling.orderLetter} .ct-point,
+                    .ct-series-#{feeling.orderLetter} .ct-bar {
+                        stroke: #{feeling.feeling.color} !important;
+                    }
+                </style>
+                <script type="text/javascript">
+                    _feelingsConfiguration[_feelingsConfiguration.length] = {
+                        name: '#{feeling.feeling.name}',
+                        feelingId: #{feeling.feeling.feelingId},
+                        icon: '#{feeling.feeling.icon}'
+                    };
+                </script>
+            </c:forEach>
+            <script type="text/javascript">
+                setInterval(function () {
+                    if (!_maxTime) {
+                        refreshAllCharts(true);
+                    }
+                }, 10000);
+                setTimeout(function () {
+                    if (!_maxTime) {
+                        refreshAllCharts(true);
+                    }
+                }, 300);
+                addChart('general');
+                hydrateChartWithData('general', #{controlPresentation.generalData});
+            </script>
+
+            <!-- END DEFINITIONS FOR UI -->
+
+            <c:forEach items="#{loggedSession.adminPresentation.filterList}" var="filter">
+                <p:panel header="#{filter.description}" toggleable="true">
+                    <div class="loadData_filter#{filter.filterPK.filterId} loadData">Waiting for users to connect...</div>
+                    <p:panelGrid columns="2" styleClass="ui-responsive charts">
+                        <span>History of sum of filtered users' feelings:</span>
+                        <div class="happiness-filter#{filter.filterPK.filterId}-chart"></div>
+                        <span>History of filtered users' feelings:</span>
+                        <div class="feeling-filter#{filter.filterPK.filterId}-chart"></div>
+                        <p:panelGrid columns="1" styleClass="ui-responsive">
+                            <span>Feelings:</span>
+                            <div class="feeling-bar-filter#{filter.filterPK.filterId}-chart"></div>
+                            <span>Most used feeling:</span>
+                            <div class="filter#{filter.filterPK.filterId}_icon_feeling big_icon_feeling"></div>
+                            <p class="center filter#{filter.filterPK.filterId}_users_connected"></p>
+                            
+                            <p:commandButton value="Current (Show Average)" type="button" styleClass="ui-btn-inline filter#{filter.filterPK.filterId}_switch_button"
+                                             onclick="switchAverageData('filter#{filter.filterPK.filterId}');
+                                         this.innerHTML = (this.innerHTML === 'Current (Show Average)' ?
+                                                         'Average (Show Current)' : 'Current (Show Average)');"
+                                             style="width: 95%;margin-left: 5%;"
+                                             />
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <div class="center">
+                        <c:forEach items="#{loggedSession.adminPresentation.presentationHaveFeelingList}" var="feeling">
+                            <p:commandButton value="#{feeling.feeling.name}" type="button" styleClass="ui-btn-inline ui-mini"
+                                             onclick="hydeShowChart('filter#{filter.filterPK.filterId}', #{feeling.feeling.feelingId});
+                                                     this.innerHTML = (this.innerHTML === '#{feeling.feeling.name}' ?
+                                                             '(#{feeling.feeling.name})' : '#{feeling.feeling.name}');" 
+                                             style="border-bottom: thick solid #{feeling.feeling.color};"
+                                             />
+                        </c:forEach>
+                    </div>
+                </p:panel>
+                <script type="text/javascript">
+                    addChart('filter#{filter.filterPK.filterId}');
+                    hydrateChartWithData('filter#{filter.filterPK.filterId}', #{controlPresentation.dataFilter(filter)});
+                </script>
+                <br/>
+            </c:forEach>
+
+            <c:forEach items="#{loggedSession.adminPresentation.sectionList}" var="section">
+                <c:if test="#{section.endtime ne null}">
+                    <script type="text/javascript">
+                        _sectionsTime[_sectionsTime.length] = getCurrentMinutesForPresentation(#{section.endtime.time});
+                    </script>
+                </c:if>
+            </c:forEach>
+            <c:if test="#{loggedSession.adminPresentation.enddate ne null}">
+                <script type="text/javascript">
+                    var endTime = getCurrentMinutesForPresentation(#{loggedSession.adminPresentation.enddate.time});
+                    _sectionsTime[_sectionsTime.length] = endTime;
+                    _maxTime = endTime;
+                    refreshAllCharts();
+                </script>
+            </c:if>
+        </ui:define>
+        <ui:define name="dialogs">                
+            <p:dialog header="Select question to send" widgetVar="questions" showEffect="pop" id="questions" style="min-width: 330px" >
+                <h:form id="form_question">
+                    <c:forEach items="#{loggedSession.adminPresentation.questionList}" var="question">
+                        <p:commandButton value="#{question.question}"
+                                         ajax="true" update=":form_answer, :form_close"
+                                         partialSubmit="true"
+                                         actionListener="#{controlPresentation.openQuestion(question)}"
+                                         />
+                    </c:forEach>
+                </h:form>
+            </p:dialog> 
+            <p:dialog header="Answers" widgetVar="answers" style="min-width: 350px; min-height: 500px;" >
+                <h:form id="form_answer">
+                    <h:outputText value="Answers for '#{controlPresentation.selectedQuestion.question}':" />
+                    <div class="answers-options-chart"></div>
+                    <div class="answers-ci-chart"></div>
+                    <p class="center users_answered"></p>
+                </h:form>
+                <h:form id="form_close">
+                    <p:commandButton value="Close question"
+                                     ajax="true" update=":form_close"
+                                     partialSubmit="true"
+                                     actionListener="#{controlPresentation.closeQuestion}"
+                                     rendered="#{controlPresentation.showCloseQuestionButton}"
+                                     />
+                </h:form>
+            </p:dialog>
+
+            <p:socket onMessage="handleAnswer" channel="/answer/#{loggedSession.adminPresentation.presentationId}" autoConnect="true" widgetVar='answerSubscriber' />
+            <p:socket onMessage="handleFeeling" channel="/feeling/#{loggedSession.adminPresentation.presentationId}" autoConnect="true" widgetVar='feelingSubscriber' />
+
+        </ui:define>
+    </ui:composition>
+</html>
