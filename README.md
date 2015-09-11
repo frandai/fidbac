@@ -6,3 +6,8 @@ You can see the system working in: [http//bit.do/fidbac] (http//bit.do/fidbac)
 Feel free to ask in: frandai [at] correo.ugr.es.
 
 This project is part of the Capstone Project of Francisco Serrano Carmona, student of the Master in Computer Engineering of Universidad de Granada (UGR).
+
+## System tested in:
+*Glassfish 4.1
+*MySQL 14.14
+*MongoDB v2.4.9
