@@ -5,7 +5,7 @@ You can see the system working in: [http://bit.do/fidbac] (http://bit.do/fidbac)
 
 Feel free to ask in: frandai [at] correo.ugr.es.
 
-This project is part of the Capstone Project of Francisco Serrano Carmona, student of the Master in Computer Engineering of Universidad de Granada (UGR).
+This project is part of the capstone Project of Francisco Serrano Carmona, student of the Master in Computer Engineering of Universidad de Granada (UGR).
 
 ## System tested using:
 * Glassfish 4.1
