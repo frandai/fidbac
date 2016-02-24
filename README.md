@@ -3,7 +3,7 @@ Fidbac (as "feedback") is an information system based in web technologies used f
 
 You can see the system working in: [http://bit.do/fidbac] (http://bit.do/fidbac)
 
-Feel free to ask in: frandai [at] correo.ugr.es.
+Feel free to ask at: frandai [at] correo.ugr.es.
 
 This project is part of the capstone Project of Francisco Serrano Carmona, student of the Master in Computer Engineering of Universidad de Granada (UGR).
 
